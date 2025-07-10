@@ -24,40 +24,55 @@ export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'vite-ui-theme',
-  ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  // Função para validar o tema
+  function getValidTheme(values: string | null): Theme {
+    if (values === 'dark' || values === 'light' || values === 'system') {
+      return values
+    }
+    return defaultTheme
+  }
+
+  const [theme, setThemeState] = useState<Theme>(() =>
+    getValidTheme(localStorage.getItem(storageKey))
   )
 
+  // Atualiza o tema do sistema em tempo real se estiver em 'system'
   useEffect(() => {
-    const root = window.document.documentElement
-
-    root.classList.remove('light', 'dark')
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light'
-
-      root.classList.add(systemTheme)
+    if (theme !== 'system') {
       return
     }
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      const rootEl = window.document.documentElement
+      rootEl.classList.remove('light', 'dark')
+      rootEl.classList.add(media.matches ? 'dark' : 'light')
+    }
+    handleChange()
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [theme])
 
-    root.classList.add(theme)
+  // Atualiza a classe do tema quando não está em 'system'
+  useEffect(() => {
+    if (theme === 'system') {
+      return
+    }
+    const rootEl = window.document.documentElement
+    rootEl.classList.remove('light', 'dark')
+    rootEl.classList.add(theme)
   }, [theme])
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem(storageKey, newTheme)
+      setThemeState(newTheme)
     },
   }
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider value={value}>
       {children}
     </ThemeProviderContext.Provider>
   )
@@ -66,8 +81,9 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
 
-  if (context === undefined)
+  if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider')
+  }
 
   return context
 }
