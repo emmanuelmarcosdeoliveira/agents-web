@@ -104,7 +104,7 @@ export function RecordRoomAudio() {
           </Button>
         </Link>
         {isRecording ? (
-          <Button onClick={stopRecording}>
+          <Button onClick={stopRecording} variant={'destructive'}>
             <CirclePause />
             Pausar Gravação
           </Button>

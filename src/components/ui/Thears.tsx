@@ -1,5 +1,4 @@
 import { Color, Mesh, Program, Renderer, Triangle } from 'ogl'
-import type React from 'react'
 import { useEffect, useRef } from 'react'
 
 interface ThreadsProps {
@@ -134,10 +133,12 @@ const Threads: React.FC<ThreadsProps> = ({
   ...rest
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const animationFrameId = useRef<number>()
+  const animationFrameId = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current) {
+      return
+    }
     const container = containerRef.current
 
     const renderer = new Renderer({ alpha: true })
@@ -210,21 +211,28 @@ const Threads: React.FC<ThreadsProps> = ({
       program.uniforms.iTime.value = t * 0.001
 
       renderer.render({ scene: mesh })
-      animationFrameId.current = requestAnimationFrame(update)
+      animationFrameId.current = requestAnimationFrame((ts) => update(ts))
     }
-    animationFrameId.current = requestAnimationFrame(update)
+    animationFrameId.current = requestAnimationFrame((ts) => update(ts))
 
     return () => {
-      if (animationFrameId.current)
+      if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current)
+      }
       window.removeEventListener('resize', resize)
 
       if (enableMouseInteraction) {
         container.removeEventListener('mousemove', handleMouseMove)
         container.removeEventListener('mouseleave', handleMouseLeave)
       }
-      if (container.contains(gl.canvas)) container.removeChild(gl.canvas)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
+      if (container.contains(gl.canvas)) {
+        container.removeChild(gl.canvas)
+      }
+      // Protege o uso do loseContext
+      const loseCtx = gl.getExtension('WEBGL_lose_context')
+      if (loseCtx && typeof loseCtx.loseContext === 'function') {
+        loseCtx.loseContext()
+      }
     }
   }, [color, amplitude, distance, enableMouseInteraction])
 
