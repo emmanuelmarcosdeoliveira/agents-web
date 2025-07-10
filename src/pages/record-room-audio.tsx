@@ -2,7 +2,7 @@
 
 import { ArrowLeft, CirclePause, Voicemail } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import Thears from '@/components/ui/Thears'
 
@@ -16,6 +16,7 @@ type RoomParams = {
 }
 
 export function RecordRoomAudio() {
+  const navigate = useNavigate()
   const params = useParams<RoomParams>()
   const [isRecording, setIsRecording] = useState(false)
   const recorder = useRef<MediaRecorder | null>(null)
@@ -97,12 +98,11 @@ export function RecordRoomAudio() {
       <Thears amplitude={1} distance={0} enableMouseInteraction={true} />
 
       <div className=" -translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 flex items-center justify-center gap-3 overflow-hidden">
-        <Link to="/">
-          <Button variant="outline">
-            <ArrowLeft className=" size-4" />
-            Voltar ao Início
-          </Button>
-        </Link>
+        <Button onClick={() => navigate(-1)} variant="outline">
+          <ArrowLeft className=" size-4" />
+          Voltar ao Início
+        </Button>
+
         {isRecording ? (
           <Button onClick={stopRecording} variant={'destructive'}>
             <CirclePause />
